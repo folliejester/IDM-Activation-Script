@@ -17,7 +17,7 @@ An open-source tool to activate and reset the trial of [Internet Download Manage
 
 ### Method
 
--   Download the file from [GitHub](https://github.com/WindowsAddict/IDM-Activation-Script/archive/refs/heads/main.zip)
+-   Download the latest release from [GitHub Releases](https://github.com/folliejester/IDM-Activation-Script/releases/latest).
 -   Right-click on the downloaded zip file and extract
 -   In the extracted folder, run the file named `IAS.cmd`
 -   You will see the activation options, and follow onscreen instructions.
