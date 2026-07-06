@@ -1,4 +1,4 @@
-@set iasver=1.2
+@set iasver=v1.1
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -7,11 +7,6 @@
 ::============================================================================
 ::
 ::   IDM Activation Script (IAS)
-::
-::   Homepages: https://github.com/WindowsAddict/IDM-Activation-Script
-::              https://massgrave.dev/idm-activation-script
-::
-::       Email: windowsaddict@protonmail.com
 ::
 ::============================================================================
 
@@ -62,9 +57,6 @@ exit /b
 
 ::========================================================================================================================================
 
-set "blank="
-set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
-
 ::  Check if Null service is working, it's important for the batch script
 
 sc query Null | find /i "RUNNING"
@@ -73,7 +65,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%idm-activation-script.html#Troubleshoot
+echo Help - https://github.com/folliejester/IDM-Activation-Script
 echo:
 echo:
 ping 127.0.0.1 -n 10
@@ -97,8 +89,7 @@ popd
 
 cls
 color 07
-title  IDM Activation Script %iasver%
-
+title  IDM Activation Script
 set _args=
 set _elev=
 set _unattended=0
@@ -214,7 +205,7 @@ echo:
 echo PowerShell is not working. Aborting...
 echo If you have applied restrictions on Powershell then undo those changes.
 echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
+echo Check this page for help. https://github.com/folliejester/IDM-Activation-Script
 goto done2
 )
 
@@ -267,17 +258,20 @@ if defined quedit goto :skipQE
 
 ::  Check for updates
 
-set -=
 set old=
+set latest=
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 iasupdatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%iasver%" %nul1% || set old=1))
-)
+for /f "delims=" %%A in ('
+%psc% -NoProfile -Command "try{(Invoke-RestMethod -Uri 'https://api.github.com/repos/folliejester/IDM-Activation-Script/releases/latest' -Headers @{'User-Agent'='IAS'}).tag_name}catch{}" %nul6%
+') do set "latest=%%A"
+
+if defined latest if /I not "%latest%"=="%iasver%" set "old=1"
 
 if defined old (
 echo ________________________________________________
 %eline%
 echo You are running outdated version IAS %iasver%
+echo Latest version is %latest%
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
@@ -287,15 +281,17 @@ echo:
 call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start https://github.com/WindowsAddict/IDM-Activation-Script & start %mas%/idm-activation-script & exit /b)
+if !errorlevel!==1 (
+start https://github.com/folliejester/IDM-Activation-Script/releases/latest
+exit /b
+)
 )
 )
 
 ::========================================================================================================================================
 
 cls
-title  IDM Activation Script %iasver%
-
+title  IDM Activation Script
 echo:
 echo Initializing...
 
@@ -307,7 +303,7 @@ echo Initializing...
 echo:
 echo WMI is not working. Aborting...
 echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
+echo Check this page for help. https://github.com/folliejester/IDM-Activation-Script
 goto done2
 )
 
@@ -326,7 +322,7 @@ echo:
 echo [%_sid%]
 echo User Account SID not found. Aborting...
 echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
+echo Check this page for help. https://github.com/folliejester/IDM-Activation-Script
 goto done2
 )
 
@@ -378,7 +374,7 @@ set "idmcheck=tasklist /fi "imagename eq idman.exe" | findstr /i "idman.exe" %nu
 %eline%
 echo Failed to write in %CLSID2%
 echo:
-echo Check this page for help. %mas%idm-activation-script.html#Troubleshoot
+echo Check this page for help. https://github.com/folliejester/IDM-Activation-Script
 goto done2
 )
 
@@ -393,7 +389,7 @@ if %_freeze%==1 (set frz=1&goto :_activate)
 :MainMenu
 
 cls
-title  IDM Activation Script %iasver%
+title  IDM Activation Script
 if not defined terminal mode 75, 28
 
 echo:
@@ -401,29 +397,31 @@ echo:
 echo:
 echo:
 echo:
-echo:                This script is NOT working with latest IDM.     
+echo:                IDM Activation Script     
 echo:            ___________________________________________________ 
 echo:                                                               
-echo:               [1] Freeze Trial
-echo:               [2] Activate
-echo:               [3] Reset Activation / Trial
+echo:               [1] Block URL (Prevent License Validation)
+echo:               [2] Freeze Trial
+echo:               [3] Activate
+echo:               [4] Reset Activation / Trial
 echo:               _____________________________________________   
 echo:                                                               
-echo:               [4] Download IDM
-echo:               [5] Help
+echo:               [5] Download IDM
+echo:               [6] Help
 echo:               [0] Exit
 echo:            ___________________________________________________
 echo:         
-call :_color2 %_White% "             " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,0]"
-choice /C:123450 /N
+call :_color2 %_White% "             " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,0]"
+choice /C:1234560 /N
 set _erl=%errorlevel%
 
-if %_erl%==6 exit /b
-if %_erl%==5 start https://github.com/WindowsAddict/IDM-Activation-Script & start https://massgrave.dev/idm-activation-script & goto MainMenu
-if %_erl%==4 start https://www.internetdownloadmanager.com/download.html & goto MainMenu
-if %_erl%==3 goto _reset
-if %_erl%==2 (set frz=0&goto :_activate)
-if %_erl%==1 (set frz=1&goto :_activate)
+if %_erl%==7 exit /b
+if %_erl%==6 start https://github.com/folliejester/IDM-Activation-Script
+if %_erl%==5 start https://www.internetdownloadmanager.com/download.html & goto MainMenu
+if %_erl%==4 goto _reset
+if %_erl%==3 (set frz=0&goto :_activate)
+if %_erl%==2 (set frz=1&goto :_activate)
+if %_erl%==1 goto _block
 goto :MainMenu
 
 ::========================================================================================================================================
@@ -517,6 +515,66 @@ exit /b
 
 ::========================================================================================================================================
 
+:_block
+cls
+echo This option will block or unblock the following domains to prevent IDM from check for a valid license:
+echo Do this only after you have downloaded the IDM application as it will prevent you from opening the official website.
+echo.
+echo   - internetdownloadmanager.com
+echo   - registeridm.com
+echo   - www.internetdownloadmanager.com
+echo.
+echo   [1] Block
+echo   [2] Unblock
+echo   [0] Back
+echo.
+echo ============================================================
+choice /c 120 /n /m "Select an option [0-2]: "
+
+if errorlevel 3 goto MainMenu
+if errorlevel 2 goto _unblock
+if errorlevel 1 goto _block_domains
+
+::========================================================================================================================================
+
+:_block_domains
+set "hosts=%SystemRoot%\System32\drivers\etc\hosts"
+
+findstr /V /B /C:"#" "%hosts%" | findstr /I /C:"127.0.0.1 internetdownloadmanager.com" >nul || echo 127.0.0.1 internetdownloadmanager.com>>"%hosts%"
+findstr /V /B /C:"#" "%hosts%" | findstr /I /C:"127.0.0.1 www.internetdownloadmanager.com" >nul || echo 127.0.0.1 www.internetdownloadmanager.com>>"%hosts%"
+findstr /V /B /C:"#" "%hosts%" | findstr /I /C:"127.0.0.1 registeridm.com" >nul || echo 127.0.0.1 registeridm.com>>"%hosts%"
+
+ipconfig /flushdns >nul
+
+echo.
+echo Domains have been blocked.
+pause
+goto MainMenu
+
+::========================================================================================================================================
+
+:_unblock
+set "hosts=%SystemRoot%\System32\drivers\etc\hosts"
+set "temp=%temp%\hosts.tmp"
+
+>"%temp%" (
+    for /f "usebackq delims=" %%A in ("%hosts%") do (
+        echo(%%A|findstr /I /X /C:"127.0.0.1 internetdownloadmanager.com" /C:"127.0.0.1 www.internetdownloadmanager.com" /C:"127.0.0.1 registeridm.com" >nul || echo(%%A
+    )
+)
+
+move /Y "%temp%" "%hosts%" >nul
+ipconfig /flushdns >nul
+
+echo.
+echo Domains have been unblocked.
+pause
+goto MainMenu
+
+::========================================================================================================================================
+
+::========================================================================================================================================
+
 :_activate
 
 cls
@@ -592,7 +650,7 @@ if not defined _fileexist (
 %eline%
 echo Error: Unable to download files with IDM.
 echo:
-echo Help: %mas%idm-activation-script.html#Troubleshoot
+echo Help: https://github.com/folliejester/IDM-Activation-Script
 goto :done
 )
 
@@ -602,9 +660,11 @@ echo:
 echo %line%
 echo:
 if %frz%==0 (
-call :_color %Green% "The IDM Activation process has been completed."
-echo:
-call :_color %Gray% "If the fake serial screen appears, use the Freeze Trial option instead."
+call :_color %Blue% "The Activation process has been completed. It is recommended that you block access to "
+call :_color %Green% "internetdownloadmanager.com, registeridm.com and www.internetdownloadmanager.com"
+call :_color %Blue% " after this."
+echo(
+call :_color %Gray% "If the fake serial screen appears, use the Freeze Trial option instead. "
 ) else (
 call :_color %Green% "The IDM 30 days trial period is successfully freezed for Lifetime."
 echo:
@@ -656,9 +716,59 @@ echo:
 echo Applying registration details...
 echo:
 
-set /a fname = %random% %% 9999 + 1000
-set /a lname = %random% %% 9999 + 1000
-set email=%fname%.%lname%@tonec.com
+:get_fname
+set /p "fname=Enter first name: "
+
+if not defined fname (
+    echo First name cannot be empty.
+    goto get_fname
+)
+
+echo(%fname%| findstr /R "^[A-Za-z][A-Za-z]*$" >nul || (
+    echo First name must contain only letters A-Z.
+    goto get_fname
+)
+
+if not "%fname:~120,1%"=="" (
+    echo First name must not exceed 120 characters.
+    goto get_fname
+)
+
+:get_lname
+set /p "lname=Enter last name: "
+
+if not defined lname (
+    echo Last name cannot be empty.
+    goto get_lname
+)
+
+echo(%lname%| findstr /R "^[A-Za-z][A-Za-z]*$" >nul || (
+    echo Last name must contain only letters A-Z.
+    goto get_lname
+)
+
+if not "%lname:~120,1%"=="" (
+    echo Last name must not exceed 120 characters.
+    goto get_lname
+)
+
+:get_email
+set /p "email=Enter email: "
+
+if not defined email (
+    echo Email cannot be empty.
+    goto get_email
+)
+
+echo(%email%| findstr /R "^[^ @][^ ]*@[A-Za-z0-9.-][A-Za-z0-9.-]*\.[A-Za-z][A-Za-z]*$" >nul || (
+    echo Please enter a valid email address.
+    goto get_email
+)
+
+if not "%email:~254,1%"=="" (
+    echo Email must not exceed 254 characters.
+    goto get_email
+)
 
 for /f "delims=" %%a in ('%psc% "$key = -join ((Get-Random -Count  20 -InputObject ([char[]]('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'))));$key = ($key.Substring(0,  5) + '-' + $key.Substring(5,  5) + '-' + $key.Substring(10,  5) + '-' + $key.Substring(15,  5) + $key.Substring(20));Write-Output $key" %nul6%') do (set key=%%a)
 
